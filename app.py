@@ -12,7 +12,6 @@ API_KEY = os.environ.get('MY_API_KEY')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL')
 SENDER_PASSWORD = os.environ.get('SENDER_PASSWORD')
 
-# --- UNGA PALAYA DESIGN (WHITE & GOLD) ---
 HTML_LAYOUT = """
 <!DOCTYPE html>
 <html lang="ta">
@@ -23,12 +22,12 @@ HTML_LAYOUT = """
         :root { --blue: #007aff; --gold: #f39c12; --white: #ffffff; }
         body { font-family: 'Poppins', sans-serif; margin: 0; background: #f8f9fa; color: #333; }
         
-        /* Login Box Design */
-        .login-screen { max-width: 400px; margin: 80px auto; padding: 30px; background: white; border-radius: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); text-align: center; }
-        input { width: 90%; padding: 15px; margin: 10px 0; border: 1px solid #eee; border-radius: 12px; background: #f9f9f9; }
+        /* Login Screen */
+        .login-screen { max-width: 400px; margin: 60px auto; padding: 30px; background: white; border-radius: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); text-align: center; }
+        input { width: 90%; padding: 15px; margin: 10px 0; border: 1px solid #eee; border-radius: 12px; background: #f9f9f9; font-size: 1rem; }
         
-        /* Original Dashboard Design */
-        .header { background: var(--white); padding: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); sticky; top: 0; z-index: 100; }
+        /* Dashboard Design */
+        .header { background: var(--white); padding: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .logo { font-size: 1.6rem; font-weight: 800; color: var(--blue); }
         .logo span { color: var(--gold); }
         .ticker { background: #ff4757; color: white; padding: 10px; overflow: hidden; white-space: nowrap; font-weight: bold; }
@@ -43,7 +42,8 @@ HTML_LAYOUT = """
         .free { background: #e3fcef; color: #00a854; }
         .premium { background: #fff1e6; color: #ff8800; }
         
-        .btn { background: var(--blue); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn { background: var(--blue); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1rem; }
+        .loading { color: var(--blue); font-weight: bold; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
@@ -53,27 +53,29 @@ HTML_LAYOUT = """
         <div class="logo">KARKA <span>CLOUD</span></div>
         {% if not otp_sent %}
         <h3>Student Portal</h3>
-        <p style="color:#666;">Enter Gmail to receive OTP</p>
-        <form method="POST" action="/send-otp">
-            <input type="email" name="email" placeholder="example@gmail.com" required>
+        <p style="color:#666;">Login via Gmail OTP</p>
+        <form method="POST" action="/send-otp" onsubmit="showLoading()">
+            <input type="email" name="email" placeholder="Enter Gmail ID" required>
             <button class="btn" type="submit">Get OTP</button>
+            <div id="loader" class="loading">Sending OTP... Please wait</div>
         </form>
         {% else %}
         <h3>Verify OTP</h3>
-        <p style="color:#666;">OTP sent to: {{ email }}</p>
+        <p style="color:#666;">Sent to: {{ email }}</p>
         <form method="POST" action="/verify-otp">
-            <input type="text" name="user_otp" placeholder="Enter 4-Digit OTP" required>
-            <button class="btn" type="submit">Verify & Enter Dashboard</button>
+            <input type="text" name="user_otp" placeholder="Enter 4-Digit OTP" required maxlength="4">
+            <button class="btn" type="submit">Verify & Enter</button>
         </form>
         {% endif %}
     </div>
+    <script>function showLoading(){ document.getElementById('loader').style.display='block'; }</script>
 
     {% else %}
     <div class="header"><div class="logo">KARKA <span>CLOUD</span></div></div>
-    <div class="ticker"><div class="ticker-text">🚀 2026 Annual Planner Released! | Group 4 Results Out! | New Material Added 🚀</div></div>
+    <div class="ticker"><div class="ticker-text">🚀 TNPSC Group 4 Result Update | Daily Current Affairs Added | Premium Notes Available 🚀</div></div>
     
     <div class="container">
-        <h3>Success Dashboard</h3>
+        <h3>Welcome, Aspirant!</h3>
         <div class="dashboard">
             <div class="card"><span class="badge free">Free</span><i class="fas fa-book"></i><br>Tamil Notes</div>
             <div class="card"><span class="badge premium">Paid</span><i class="fas fa-crown"></i><br>Maths Tricks</div>
@@ -85,22 +87,24 @@ HTML_LAYOUT = """
             <h4>💎 Premium Unlock</h4>
             <p>Pay <b>₹99</b> for Lifetime Access</p>
             <p><b>UPI: yourid@upi</b></p>
-            <button class="btn" onclick="alert('Redirecting to Payment...')">Pay via QR/UPI</button>
+            <button class="btn" onclick="alert('Contact Admin for Payment')">Pay via QR/UPI</button>
         </div>
     </div>
     {% endif %}
-
 </body>
 </html>
 """
 
 def send_mail(receiver, otp):
     msg = EmailMessage()
-    msg.set_content(f"Your Karka Cloud Login OTP is: {otp}")
+    msg.set_content(f"Unga Karka Cloud Login OTP: {otp}. Success Portal-ai thirakka idhai payanpaduthunga.")
     msg['Subject'] = 'Karka Cloud OTP Verification'
     msg['From'] = SENDER_EMAIL
     msg['To'] = receiver
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+    
+    # Stable Connection using Port 587 (TLS)
+    with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
+        smtp.starttls()
         smtp.login(SENDER_EMAIL, SENDER_PASSWORD)
         smtp.send_message(msg)
 
@@ -118,7 +122,7 @@ def handle_send_otp():
         send_mail(email, otp)
         return render_template_string(HTML_LAYOUT, otp_sent=True, email=email)
     except Exception as e:
-        return f"Error: {e}. Check if SENDER_EMAIL and SENDER_PASSWORD are set in Render."
+        return f"Error: {e}. Check Render Variables 'SENDER_EMAIL' and 'SENDER_PASSWORD'."
 
 @app.route('/verify-otp', methods=['POST'])
 def verify():
